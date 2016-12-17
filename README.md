@@ -28,3 +28,5 @@ Installation notes
 -
 - Running 'animation-explorer.py' will cause a browser window to open. This is similar to  'remote_control_cozmo.py' from the Cozmo SDK examples.
 - Install the entire project, not just the .py file, or it won't work.
+
+![Cozmo-Animation-Explorer](static/img/application-screenshot.jpg)
