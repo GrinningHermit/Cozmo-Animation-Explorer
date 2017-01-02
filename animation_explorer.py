@@ -8,17 +8,19 @@
 
 from flask import Flask, render_template, request
 import flask_helpers
-import sys
 import cozmo
 import json
 import random
 import time
 
+robot = None
 cozmoEnabled = True
+return_to_pose = False
 flask_app = Flask(__name__)
 randomID = random.randrange(1000000000, 9999999999)
 anim_names = ''
-animation_playing = {}
+triggers = ''
+behaviors = ''
 
 
 @flask_app.route('/')
@@ -26,47 +28,92 @@ def index():
     return render_template('index.html', randomID=randomID, animNames=anim_names)
 
 
-@flask_app.route('/play_animation', methods=['POST'])
-def program_list():
-    global robot
+@flask_app.route('/toggle_pose', methods=['POST'])
+def toggle_pose():
+    global return_to_pose
+    # Toggle for returning to pose after finishing animation
+    return_to_pose = not return_to_pose
 
+    return str(return_to_pose)
+
+
+@flask_app.route('/play_animation', methods=['POST'])
+def play_animation():
     # Handling of received animation
     animation = json.loads(request.data.decode('utf-8'))
     if cozmoEnabled:
+        pose = robot.pose
         robot.play_anim(animation).wait_for_completed()
+        if return_to_pose:
+            robot.go_to_pose(pose)
     else:
         time.sleep(1)
 
     return 'true'
 
 
-def run(sdk_conn):
-    '''
-        The run method runs once Cozmo is connected.
-    '''
+@flask_app.route('/play_trigger', methods=['POST'])
+def play_trigger():
+    # Handling of received trigger
+    trigger = json.loads(request.data.decode('utf-8'))
+    if cozmoEnabled:
+        pose = robot.pose
+        robot.play_anim_trigger(getattr(cozmo.anim.Triggers, trigger)).wait_for_completed()
+        if return_to_pose:
+            robot.go_to_pose(pose)
+    else:
+        time.sleep(1)
 
+    return 'true'
+
+
+@flask_app.route('/play_behavior', methods=['POST'])
+def play_behavior():
+    # Handling of received behavior
+    behavior = json.loads(request.data.decode('utf-8'))
+    if cozmoEnabled:
+        pose = robot.pose
+        behave = robot.start_behavior(getattr(cozmo.behavior.BehaviorTypes, behavior))
+        time.sleep(10)
+        behave.stop()
+        if return_to_pose:
+            robot.go_to_pose(pose)
+    else:
+        time.sleep(1)
+
+    return 'true'
+
+
+def cozmo_program(_robot: cozmo.robot.Robot):
     global robot
-
-    robot = sdk_conn.wait_for_robot()
+    robot = _robot
 
     try:
         global anim_names
+        global triggers
+        global behaviors
         for a in robot.conn.anim_names:
             anim_names += a + ','
+        for t in dir(cozmo.anim.Triggers):
+            if '__' not in t:
+                triggers += t + ','
+        for b in dir(cozmo.behavior.BehaviorTypes):
+            if '__' not in b:
+                behaviors += b + ','
         flask_helpers.run_flask(flask_app)
 
     except KeyboardInterrupt:
-        print("")
-        print("Exit requested by user")
+        print("\nExit requested by user")
 
-if __name__ == '__main__' and cozmoEnabled:
-    cozmo.setup_basic_logging()
-    cozmo.robot.Robot.drive_off_charger_on_connect = True  # Cozmo can stay on his charger for this example
+try:
+    cozmo.run_program(cozmo_program)
+except SystemExit as e:
+    cozmoEnabled = False
     try:
-        cozmo.connect(run)
-    except cozmo.ConnectionError as e:
-        sys.exit("A connection error occurred: %s" % e)
+        flask_helpers.run_flask(flask_app)
+    except KeyboardInterrupt:
+        print("\nExit requested by user")
 
-else:
-    print('Robot testing disabled')
-    flask_helpers.run_flask(flask_app)
+    print('e = "%s"' % e)
+    print('\nNo Cozmo detected')
+
