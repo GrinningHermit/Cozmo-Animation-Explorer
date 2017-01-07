@@ -16,30 +16,24 @@ body {
 }
 
 #content {
-    width: 800px;
-    margin: 0;
-    padding: 0;
-}
-
-.flex-cstm {
     display: flex;
     flex-direction: row;
     text-align: left;
-    overflow: hidden !important;
-    padding: 0 !important;
-    width: 800px;
+    overflow: hidden;
+    padding: 0 20px 0 20px;
 }
 
-.l-col {
-    float: left;
+#l-col {
+    flex: 1 300px;
 }
 
 #c-col {
     flex: 1 auto;
 }
 
-.r-col {
-    float: left;
+#r-col {
+    flex: 99999;
+    padding: 20px;
 }
 
 .flex-col {
@@ -50,27 +44,26 @@ body {
    flex: auto;
 }
 
-.ul-list {
+ul {
     display: inline-block;
     overflow-y: scroll;
     list-style: none;
     font-family: "Courier", "Lucida Console", monospace;
     font-size: .8em;
-    width: 500px;
+    width: auto;
     margin: 0;
     padding: 0;
 }
-
-.item-list {
+li {
     clear: both;
     border-bottom: solid 1px #eeeeee;
     line-height: 26px;
-    padding: 0 10px 0 10px;
+    padding: 0 8px 0 8px;
     color: #444444;
     background-color: #ffffff;
 }
 
-.item-list:hover {
+li:hover {
     color: #ffffff;
     background-color: #444444;
 }
@@ -79,9 +72,8 @@ input {
     height: 30px;
     font-size: 1em;
     outline: none;
-    margin: 0 5px 0 23px;
-    padding: 0 0 0 5px;
-    width: 470px;
+    margin: 0 5px 0 20px;
+    width: 270px;
 }
 
 select:focus,
@@ -90,7 +82,7 @@ button:focus {
     outline: none;
 }
 
-.filtersubmit {
+#filtersubmit {
     position: relative;
     z-index: 1;
     left: -40px;
@@ -99,7 +91,7 @@ button:focus {
     width: 0;
 }
 
-.filterclear {
+#filterclear {
     position: relative;
     z-index: 2;
     left: -34px;

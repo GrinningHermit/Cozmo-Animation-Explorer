@@ -17,15 +17,15 @@ robot = None
 cozmoEnabled = True
 return_to_pose = False
 flask_app = Flask(__name__)
-randomID = random.randrange(1000000000, 9999999999)
-anim_names = ''
+rndID = random.randrange(1000000000, 9999999999)
+animations = ''
 triggers = ''
 behaviors = ''
 
 
 @flask_app.route('/')
 def index():
-    return render_template('index.html', randomID=randomID, animNames=anim_names)
+    return render_template('index.html', randomID=rndID, animations=animations, triggers=triggers, behaviors=behaviors)
 
 
 @flask_app.route('/toggle_pose', methods=['POST'])
@@ -89,17 +89,20 @@ def cozmo_program(_robot: cozmo.robot.Robot):
     robot = _robot
 
     try:
-        global anim_names
+        global animations
         global triggers
         global behaviors
         for a in robot.conn.anim_names:
-            anim_names += a + ','
+            animations += a + ','
+        animations = animations[:-1]
         for t in dir(cozmo.anim.Triggers):
             if '__' not in t:
                 triggers += t + ','
+        triggers = triggers[:-1]
         for b in dir(cozmo.behavior.BehaviorTypes):
             if '__' not in b:
                 behaviors += b + ','
+        behaviors = behaviors[:-1]
         flask_helpers.run_flask(flask_app)
 
     except KeyboardInterrupt:

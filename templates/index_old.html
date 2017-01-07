@@ -28,34 +28,29 @@
         Animation Explorer
         <div class="hermit">created by <a href="https://forums.anki.com/users/grinninghermit/summary">GrinningHermit</a></div>
     </div>
+    <div id="menu">
+        <button id="btn-animations" class="ui-button ui-widget ui-corner-all">Animations</button>
+        <button id="btn-triggers" class="ui-button ui-widget ui-corner-all">Triggers</button>
+        <button id="btn-behaviors" class="ui-button ui-widget ui-corner-all">Behaviors</button>
+    </div>
+
     <div id="content">
-        <div id="tabs">
-            <ul>
-                <li><a href="#fragment-0"><span>Animations</span></a></li>
-                <li><a href="#fragment-1"><span>Triggers</span></a></li>
-                <li><a href="#fragment-2"><span>Behaviors</span></a></li>
-            </ul>
-            <div id="fragment-0" class="flex-cstm">
-                <div class="l-col">
-                    <div class="bg-grey">
-                        <input class="search" name="search" placeholder="Search" type="text" data-list=".list">
-                        <i class="filterclear fa fa-times-circle"></i>
-                        <i class="filtersubmit fa fa-search"></i>
-                    </div>
-                    <ul id="ul-animations" class="ul-list"></ul>
-                </div>
-                <div class="r-col">
-
-                </div>
-            </div>
-            <div id="fragment-1" class="flex-cstm">
-
-            </div>
-            <div id="fragment-2" class="flex-cstm">
-
-            </div>
+    <div id="tabs">
+        <ul>
+            <li><a href="#fragment-1">One</a></li>
+            <li><a href="#fragment-2">Two</a></li>
+            <li><a href="#fragment-3">Three</a></li>
+        </ul>
+        <div id="fragment-1">
+            Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
         </div>
-    {#
+        <div id="fragment-2">
+            Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+        </div>
+        <div id="fragment-3">
+            Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+        </div>
+    </div>
         <div id="l-col" class="flex-col">
             <div class="bg-grey">
                 <input id="search" name="search" placeholder="Search" type="text" data-list=".list">
@@ -81,7 +76,6 @@
                 This is the complete list of animations directly pulled from Cozmo's memory. Click an animation to play it. You can copy an animation for your own use in your python script. <br><br>Check the project file 'play_animation.py' on how to play the animation in your own script.
             </div>
         </div>
-#}
     </div>
 </body>
 
