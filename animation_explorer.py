@@ -21,6 +21,7 @@ rndID = random.randrange(1000000000, 9999999999)
 animations = ''
 triggers = ''
 behaviors = ''
+action = None
 
 
 @flask_app.route('/')
@@ -33,7 +34,7 @@ def toggle_pose():
     global return_to_pose
     # Toggle for returning to pose after finishing animation
     return_to_pose = not return_to_pose
-
+    print('return_to_pose is set to: ' + str(return_to_pose))
     return str(return_to_pose)
 
 
@@ -47,7 +48,7 @@ def play_animation():
         if return_to_pose:
             robot.go_to_pose(pose)
     else:
-        time.sleep(1)
+        time.sleep(2)
 
     return 'true'
 
@@ -62,7 +63,7 @@ def play_trigger():
         if return_to_pose:
             robot.go_to_pose(pose)
     else:
-        time.sleep(1)
+        time.sleep(2)
 
     return 'true'
 
@@ -70,16 +71,29 @@ def play_trigger():
 @flask_app.route('/play_behavior', methods=['POST'])
 def play_behavior():
     # Handling of received behavior
+    global action
     behavior = json.loads(request.data.decode('utf-8'))
     if cozmoEnabled:
         pose = robot.pose
-        behave = robot.start_behavior(getattr(cozmo.behavior.BehaviorTypes, behavior))
-        time.sleep(10)
-        behave.stop()
+        action = robot.start_behavior(getattr(cozmo.behavior.BehaviorTypes, behavior))
+        # time.sleep(30)
+        # action.stop()
         if return_to_pose:
             robot.go_to_pose(pose)
     else:
-        time.sleep(1)
+        time.sleep(2)
+
+    return 'true'
+
+
+@flask_app.route('/stop', methods=['POST'])
+def stop():
+    global action
+    if action is not None:
+        action.stop()
+        action = None
+    else:
+        robot.abort_all_actions()
 
     return 'true'
 

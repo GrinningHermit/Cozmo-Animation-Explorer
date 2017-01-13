@@ -32,7 +32,6 @@ except ImportError:
     sys.exit("Cannot import from flask: Do `pip3 install --user flask` to install")
 
 
-
 def _delayed_open_web_browser(url, delay, new=0, autoraise=True, specific_browser=None):
     '''
     Spawn a thread and call sleep_and_open_web_browser from within it so that main thread can keep executing at the

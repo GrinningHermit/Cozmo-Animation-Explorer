@@ -1,6 +1,8 @@
-var groupButtons = [];
-
 var isRunning = false;
+var isMouseDown = false;
+var tempListID = null;
+var isPlayingListID = null;
+var returnToPose = false;
 
 var currentTab = 'animations';
 
@@ -17,15 +19,33 @@ stringSorting = function (str) {
     return array
 };
 
-// var animations = stringSorting(anims_raw);
-// var triggers = stringSorting(triggers_raw);
-// var behaviors = stringSorting(behaviors_raw);
-
-var animations = {name: 'animations', list: stringSorting(anims_raw)};
-var triggers = {name: 'triggers', list: stringSorting(triggers_raw)};
-var behaviors = {name: 'behaviors', list: stringSorting(behaviors_raw)};
+var animations = {
+    name: 'animations',
+    list: stringSorting(anims_raw),
+    str: '',
+    active: 0,
+    info: 'A list of animations. Pick an animation from the list and click the play button to animate Cozmo.<br/><br/>For copying to clipboard:<br/>A.) use the copy button, OR<br/>B.) select a line of text and press Ctrl-C'};
+var triggers = {
+    name: 'triggers',
+    list: stringSorting(triggers_raw),
+    str: '',
+    active: 0,
+    info: 'A list of animation sets. This differs from the Animation list in that each time you press the same animation from the list, it may play out slightly different. This offers variety: it makes Cozmo seem more alive if you use triggers in your own code.<br/><br/>For copying to clipboard:<br/>A.) use the copy button, OR<br/>B.) select a line of text and press Ctrl-C'};
+var behaviors = {
+    name: 'behaviors',
+    list: stringSorting(behaviors_raw),
+    str: '',
+    active: 0,
+    info: 'A list of behaviors. Behaviors represent a task that Cozmo may perform for an indefinite amount of time. Animation Explorer limits active time to 30 seconds. You can abort by pressing the \'stop\' button.<br/><br/>For copying to clipboard:<br/>A.) use the copy button, OR<br/>B.) select a line of text and press Ctrl-C'};
 
 var listArray = [animations, triggers, behaviors];
+
+var listButtons = '' +
+    '<div id="list-buttons">' +
+        // '<i id="btn-explanation" class="fa fa-question box"></i>' +
+        '<i id="btn-copy-clipboard" class="fa fa-copy box"></i>' +
+        '<i id="btn-play-stop" class="fa fa-play box"></i>' +
+    '</div>';
 
 // sending and receiving json from server
 getHttpRequest = function (url, dataSet) {
@@ -33,7 +53,20 @@ getHttpRequest = function (url, dataSet) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {
-            checkRunning(false);
+            if(isRunning) {
+                if (currentTab == 'behaviors'){
+                    setTimeout(function(){
+                            if(isRunning && currentTab == 'behaviors') {
+                                checkRunning(false);
+                                getHttpRequest('stop', '');
+                            }
+                        },
+                        30000 // run behavior for 30 seconds
+                    );
+                } else {
+                    checkRunning(false);
+                }
+            }
         }
     };
     xhr.open('POST', url, true);
@@ -43,18 +76,43 @@ getHttpRequest = function (url, dataSet) {
 // while running (or not) toggle elements
 checkRunning = function (bool) {
     isRunning = bool;
+
     if (bool){
-        $('ul').css({'opacity': 0.5});
+        $('.item-list').addClass('greyed-out');
+        $('#list-buttons').parent().addClass('bg-playing');
         $('#c-play').show();
         $('#c-eyes').hide();
+        $('#btn-play-stop').addClass('red');
+        if(currentTab == 'behaviors') {
+            $('#btn-play-stop').addClass('fa-stop');
+        } else {
+            $('#btn-play-stop').hide();
+        }
+        $('.bg-just-played').removeClass('bg-just-played');
+        isPlayingListID = $('#list-buttons').parent();
     } else {
-        $('ul').css({'opacity': 1});
+        if(isPlayingListID != null) {
+            isPlayingListID.toggleClass('bg-playing bg-just-played');
+            isPlayingListID = null;
+        }
+        $('.item-list').removeClass('greyed-out');
         $('#c-play').hide();
         $('#c-eyes').show();
-        $('#status').text('stopped');
+        if(currentTab == 'behaviors') {
+            $('#btn-play-stop').removeClass('fa-stop');
+        } else {
+            $('#btn-play-stop').show();
+        }
+        if($('#list-buttons').length && $('#list-buttons').parent().is(':hover')){
+            $('#btn-play-stop').removeClass('red');
+        } else {
+            $('#list-buttons').remove();
+            if(tempListID != null){
+                createListButtons(tempListID);
+            }
+        }
     }
 };
-
 
 // store text value in OS clipboard
 function copyTextToClipboard(text) {
@@ -72,25 +130,31 @@ function copyTextToClipboard(text) {
     document.body.removeChild(textArea);
 }
 
-// hide list item if string from search box does not match list item text
-function matchCharacters(str){
+function loadArray(){
     var array = [];
     if (currentTab == 'animations'){
-        array = animations.list;
+        array = animations;
     } else if (currentTab == 'triggers'){
-        array = triggers.list;
+        array = triggers;
     } else if (currentTab == 'behaviors'){
-        array = behaviors.list;
+        array = behaviors;
     }
-    for(var i = 0; i < array.length; i++){
+    return array
+}
+
+// hide list item if string from search box does not match list item text
+function matchCharacters(str){
+    var array = loadArray();
+
+    for(var i = 0; i < array.list.length; i++){
         var elem = $('#li_' + i);
-        if (array[i].toLowerCase().indexOf(str.toLowerCase()) != -1){
+        if (array.list[i].toLowerCase().indexOf(str.toLowerCase()) != -1){
             elem.show();
-        } else if(elem.is(":visible")){
+        } else {
             elem.hide();
         }
     }
-    console.log(str);
+    console.log('matching character(s): ' + str);
     showClear(str);
 }
 
@@ -108,14 +172,63 @@ function showClear(str){
 // create list
 function createList(array){
     for (var i =0; i < array.list.length; i++) {
-        $('#ul-' + array.name).append('<li id="li_' + i + '" class="item-list">' + array.list[i] + '</li>');
-        $('#li_' + i).click(function () {
-            getHttpRequest('play_' + array.name.substr(0, array.name.length-1), $(this).text()); // start specific animation
-            var str = $(this).text();
-            $('#mono').text(str);
-            $('#status').text('is playing');
-            $('#btn-copy').css({'background-color': '#ffffff', 'color': '#000000'});
+        $('#ul-' + array.name).append('<li id="li_' + i + '" class="item-list"><span>' + array.list[i] + '</span></li>');
+        var li = $('#li_' + i);
+        li.mouseenter(function () {
+            if(!isRunning) {
+                if ($('#list-buttons').length) {
+                    $('#list-buttons').remove();
+                }
+                tempListID = $(this);
+                createListButtons($(this));
+            }
+        });
+        li.mouseleave(function () {
+            tempListID = null;
+            if($('#list-buttons').length && !isRunning) {
+                $('#list-buttons').remove();
+            }
+        })
+    }
+}
+
+// create buttons for list item
+function createListButtons(item){
+    if(!isRunning && !isMouseDown) {
+        item.append(listButtons);
+        $('#btn-play-stop').click(function () {
+            var array = loadArray();
+            if(!isRunning) {
+                getHttpRequest('play_' + array.name.substr(0, array.name.length - 1), $('#list-buttons').parent().text()); // start specific animation
+            }else {
+                getHttpRequest('stop', ''); // abort action
+                checkRunning(false);
+            }
+        });
+        $('#btn-copy-clipboard').click(function () {
+            var textObj = $('#list-buttons').parent().children(":first");
+            var str = textObj.text();
+            textObj.text('copied to clipboard');
+            //parent.mouseenter(); // this behaves quirky
             copyTextToClipboard(str);
+            console.log(str);
+            setTimeout(function() {
+                textObj.text(str);
+                //parent.mouseenter(); // this behaves quirky
+            }, 600);
+        });
+        $('#btn-explanation').click(function () {
+/*
+            if (!$('#copied').length) {
+                var str = $('#list-buttons').parent().text();
+                copyTextToClipboard(str);
+                $('#list-buttons').parent().append('<div id="copied">copied to clipboard</div>');
+                console.log(str);
+                setTimeout(function () {
+                    $('#copied').remove();
+                }, 600);
+            }
+*/
         })
     }
 }
@@ -134,15 +247,12 @@ function initSearch() {
     });
 }
 
-/*** INITIALIZATION ***/
-$( function () {
-    $('#content').css({height: ($(window).height() - 74) + 'px'});
-    // creating list of cozmo animations (active tab)
-    createList(animations);
-
+function createGroupButtons() {
     // create group buttons
-    for (var j=0; j < animations.length; j++){
-        var str = animations[j];
+    var groupButtons = [];
+
+    for (var j=0; j < animations.list.length; j++){
+        var str = animations.list[j];
         var n = str.indexOf("_");
         str = str.substr(n+1);
         n = str.indexOf("_");
@@ -155,9 +265,9 @@ $( function () {
                 break
             }
         }
-        if(!match && animations[j].indexOf('anim_') > -1){
+        if(!match && animations.list[j].indexOf('anim_') > -1){
             groupButtons[groupButtons.length] = str;
-            $('.r-col').append('<button id="btn-' + str + '" class="flex-item ui-button ui-widget ui-corner-all">' + str + '</button>');
+            $('#search-btns').append('<button id="btn-' + str + '" class="flex-item ui-button ui-widget ui-corner-all">' + str + '</button>');
             $('#btn-' + str).click(function(){
                 if (!isRunning) {
                     var str = $(this).text();
@@ -170,7 +280,46 @@ $( function () {
             })
         }
     }
+}
 
+function createAccordeon() {
+    var list = {};
+    for (var i = 0; i < listArray.length; i++){
+        if (listArray[i].name == currentTab){
+            list = listArray[i];
+            $('#accordion p').append(list.info);
+        }
+    }
+    $('#accordion').accordion({
+        collapsible: true,
+        activate: function(event, ui){
+            ui.oldHeader.removeClass('box-shadow');
+            list.active = $(this).accordion( "option", "active" );
+        },
+        active: list.active
+    });
+}
+
+var waitForFinalEvent = (function () {
+  var timers = {};
+  return function (callback, ms, uniqueId) {
+    if (!uniqueId) {
+      uniqueId = 'Do not call this twice without a uniqueId';
+    }
+    if (timers[uniqueId]) {
+      clearTimeout (timers[uniqueId]);
+    }
+    timers[uniqueId] = setTimeout(callback, ms);
+  };
+})();
+
+
+/*** INITIALIZATION ***/
+$( function () {
+    // creating list of cozmo animations (active tab)
+    createList(animations);
+    createAccordeon();
+    createGroupButtons();
     initSearch();
 
     // enable clipboard copy button
@@ -181,50 +330,25 @@ $( function () {
         $(this).css({'background-color': '#05BE00', 'color': '#ffffff'});
     });
 
-    $('#btn-animations').click(function () {
-        if (currentTab != 'animation'){
-            currentTab = 'animation';
-            $('ul').empty();
-            createList(animations);
-            $(this).css({'background-color': '#ccc000'});
-            $('#btn-triggers').css({'background-color': '#cccccc'});
-            $('#btn-behaviors').css({'background-color': '#cccccc'});
-        }
-    });
-    $('#btn-animations').css({'background-color': '#ccc000'});
-
-    $('#btn-triggers').click(function () {
-        if (currentTab != 'trigger'){
-            currentTab = 'trigger';
-            $('ul').empty();
-            createList(triggers);
-            $(this).css({'background-color': '#ccc000'});
-            $('#btn-animations').css({'background-color': '#cccccc'});
-            $('#btn-behaviors').css({'background-color': '#cccccc'});
-        }
-    });
-
-    $('#btn-behaviors').click(function () {
-        if (currentTab != 'behavior'){
-            currentTab = 'behavior';
-            $('ul').empty();
-            createList(behaviors);
-            $(this).css({'background-color': '#ccc000'});
-            $('#btn-animations').css({'background-color': '#cccccc'});
-            $('#btn-triggers').css({'background-color': '#cccccc'});
-        }
-    });
-
     $( "#tabs" ).tabs({
         heightStyle: 'fill',
         beforeActivate: function(event, ui){
-            var str = ui.newTab.attr('aria-controls');
+            if(isRunning){
+                getHttpRequest('stop', ''); // abort action
+                checkRunning(false);
+            }
+            for (var i = 0; i < listArray.length; i++){
+                if (listArray[i].name == currentTab){
+                    listArray[i].str = $('.search').val();
+                }
+            }
+            var idStr = ui.newTab.attr('aria-controls');
             var oldStr = ui.oldTab.attr('aria-controls')
-            var id = Number(str.substr(9));
+            var id = Number(idStr.substr(9));
             var name = listArray[id].name;
             currentTab = name;
             $('#' + oldStr).html('');
-            $('#' + str).html('' +
+            $('#' + idStr).html('' +
                 '<div class="l-col">' +
                     '<div class="bg-grey">' +
                         '<input class="search" name="search" placeholder="Search" type="text" data-list=".list">' +
@@ -232,17 +356,61 @@ $( function () {
                     '</div>' +
                     '<ul id="ul-' + name + '" class="ul-list"></ul>' +
                 '</div>' +
-                '<div class="r-col"></div>');
+                '<div class="r-col">' +
+                    '<div id="accordion">' +
+                        '<h3> Info</h3>' +
+                        '<div>' +
+                            '<p></p>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div id="search-btns">' +
+                    '</div>' +
+                '</div>'
+            );
+            setTimeout(function () {
+                createAccordeon();
+            }, 50);
             createList(listArray[id]);
+            if (currentTab == 'animations'){
+                createGroupButtons();
+            }
             initSearch();
-            console.log(id);
+            for (var j = 0; j < listArray.length; j++){
+                if (listArray[j].name == currentTab){
+                    var str = listArray[j].str;
+                    $('.search').val(str);
+                    matchCharacters(str);
+                }
+            }
         },
-        activate: function(event, ui){
-            $('.ul-list').height($(window).height() - $('.ul-list').offset().top - 4);
-            //console.log($(this).tabs( 'option', 'active' ))
+        classes: {
+            'ui-tabs-nav': 'tabs-nav',
+            'ui-tabs': 'tabs'
         }
     });
 
-    $('.ul-list').height($(window).height() - $('.ul-list').offset().top - 4);
+    // global mousedown detection: to prevent list-buttons from being created while mouse is pressed
+    $('body').mousedown(function () {
+        isMouseDown = true;
+    });
+
+    $('body').mouseup(function () {
+        isMouseDown = false;
+    });
+
+    $('#tablist').removeClass('ui-corner-all');
+
+    $('#checkbox-1').bind('change', function(){
+        getHttpRequest('toggle_pose', '');
+    });
+
+    $(window).resize(function () {
+        waitForFinalEvent(function(){
+            $('.flex-cstm').outerHeight($(window).height() - $('.flex-cstm').offset().top);
+            $('.ul-list').outerHeight($(window).height() - $('.ul-list').offset().top);
+        }, 500, 'uniqueID');
+    });
+
+    $(window).resize();
 
 });
