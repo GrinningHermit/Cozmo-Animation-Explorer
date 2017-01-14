@@ -13,7 +13,7 @@ import json
 import random
 import time
 import logging
-logging.basicConfig(format='%(asctime)s Animation Explorer %(levelname)s %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s animation explorer %(levelname)s %(message)s', level=logging.INFO)
 
 robot = None
 cozmoEnabled = True
@@ -49,7 +49,7 @@ def play_animation():
     if cozmoEnabled:
         pose = robot.pose
         robot.play_anim(animation).wait_for_completed()
-        logging.info('animation \'' + animation + '\' started')
+        logging.info('Animation \'' + animation + '\' started')
         check_pose_return()
     else:
         time.sleep(2)
@@ -65,7 +65,7 @@ def play_trigger():
     if cozmoEnabled:
         pose = robot.pose
         robot.play_anim_trigger(getattr(cozmo.anim.Triggers, trigger)).wait_for_completed()
-        logging.info('trigger \'' + trigger + '\' started')
+        logging.info('Trigger \'' + trigger + '\' started')
         check_pose_return()
     else:
         time.sleep(2)
@@ -82,7 +82,7 @@ def play_behavior():
     if cozmoEnabled:
         pose = robot.pose
         action = [robot.start_behavior(getattr(cozmo.behavior.BehaviorTypes, behavior)), behavior]
-        logging.info('behavior \'' + behavior + '\' started')
+        logging.info('Behavior \'' + behavior + '\' started')
 
     else:
         time.sleep(2)
@@ -129,6 +129,7 @@ def cozmo_program(_robot: cozmo.robot.Robot):
             if '__' not in b:
                 behaviors += b + ','
         behaviors = behaviors[:-1]
+        logging.info('Attempting to open browser window at 127.0.0.1:5000')
         flask_helpers.run_flask(flask_app)
 
     except KeyboardInterrupt:
