@@ -12,6 +12,8 @@ import cozmo
 import json
 import random
 import time
+import logging
+logging.basicConfig(format='%(asctime)s Animation Explorer %(levelname)s %(message)s', level=logging.INFO)
 
 robot = None
 cozmoEnabled = True
@@ -21,7 +23,8 @@ rndID = random.randrange(1000000000, 9999999999)
 animations = ''
 triggers = ''
 behaviors = ''
-action = None
+action = []
+pose = None
 
 
 @flask_app.route('/')
@@ -34,19 +37,20 @@ def toggle_pose():
     global return_to_pose
     # Toggle for returning to pose after finishing animation
     return_to_pose = not return_to_pose
-    print('return_to_pose is set to: ' + str(return_to_pose))
+    logging.info('return_to_pose is set to: ' + str(return_to_pose))
     return str(return_to_pose)
 
 
 @flask_app.route('/play_animation', methods=['POST'])
 def play_animation():
     # Handling of received animation
+    global pose
     animation = json.loads(request.data.decode('utf-8'))
     if cozmoEnabled:
         pose = robot.pose
         robot.play_anim(animation).wait_for_completed()
-        if return_to_pose:
-            robot.go_to_pose(pose)
+        logging.info('animation \'' + animation + '\' started')
+        check_pose_return()
     else:
         time.sleep(2)
 
@@ -56,12 +60,13 @@ def play_animation():
 @flask_app.route('/play_trigger', methods=['POST'])
 def play_trigger():
     # Handling of received trigger
+    global pose
     trigger = json.loads(request.data.decode('utf-8'))
     if cozmoEnabled:
         pose = robot.pose
         robot.play_anim_trigger(getattr(cozmo.anim.Triggers, trigger)).wait_for_completed()
-        if return_to_pose:
-            robot.go_to_pose(pose)
+        logging.info('trigger \'' + trigger + '\' started')
+        check_pose_return()
     else:
         time.sleep(2)
 
@@ -71,15 +76,14 @@ def play_trigger():
 @flask_app.route('/play_behavior', methods=['POST'])
 def play_behavior():
     # Handling of received behavior
+    global pose
     global action
     behavior = json.loads(request.data.decode('utf-8'))
     if cozmoEnabled:
         pose = robot.pose
-        action = robot.start_behavior(getattr(cozmo.behavior.BehaviorTypes, behavior))
-        # time.sleep(30)
-        # action.stop()
-        if return_to_pose:
-            robot.go_to_pose(pose)
+        action = [robot.start_behavior(getattr(cozmo.behavior.BehaviorTypes, behavior)), behavior]
+        logging.info('behavior \'' + behavior + '\' started')
+
     else:
         time.sleep(2)
 
@@ -89,13 +93,21 @@ def play_behavior():
 @flask_app.route('/stop', methods=['POST'])
 def stop():
     global action
-    if action is not None:
-        action.stop()
-        action = None
+    if action is not []:
+        robot.stop_freeplay_behaviors()
+        logging.info('behavior \'' + action[1] + '\' stopped')
+        action = []
+        check_pose_return()
     else:
         robot.abort_all_actions()
 
-    return 'true'
+    return 'false'
+
+
+def check_pose_return():
+    if return_to_pose:
+        robot.go_to_pose(pose)
+        logging.info('Cozmo returning to pose he had before animation started')
 
 
 def cozmo_program(_robot: cozmo.robot.Robot):

@@ -3,6 +3,7 @@ var isMouseDown = false;
 var tempListID = null;
 var isPlayingListID = null;
 var returnToPose = false;
+var stopTimeOut;
 
 var currentTab = 'animations';
 
@@ -49,16 +50,19 @@ var listButtons = '' +
 
 // sending and receiving json from server
 getHttpRequest = function (url, dataSet) {
-    checkRunning(true);
+    if(url != 'toggle_pose' && !isRunning) {
+        checkRunning(true);
+    }
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {
             if(isRunning) {
                 if (currentTab == 'behaviors'){
-                    setTimeout(function(){
+                    stopTimeOut = setTimeout(function(){
                             if(isRunning && currentTab == 'behaviors') {
-                                checkRunning(false);
+                                console.log('stopTimeOut triggered');
                                 getHttpRequest('stop', '');
+                                checkRunning(false);
                             }
                         },
                         30000 // run behavior for 30 seconds
@@ -75,6 +79,7 @@ getHttpRequest = function (url, dataSet) {
 
 // while running (or not) toggle elements
 checkRunning = function (bool) {
+    console.log('checkRunning: ' + bool);
     isRunning = bool;
 
     if (bool){
