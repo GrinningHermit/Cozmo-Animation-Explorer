@@ -5,28 +5,77 @@
 
     <title>Cozmo Animation Explorer</title>
 
-    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="../static/css/jquery-ui.css?q={{ randomID }}">
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
-    <link rel="stylesheet" href="../static/css/cozmo_animation_list.css?q={{ randomID }}">
 
     <script type=text/javascript>
         var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-        var anims_raw = '{{ animNames }}';
+        var anims_raw = '{{ animations }}';
+        var triggers_raw = '{{ triggers }}';
+        var behaviors_raw = '{{ behaviors }}';
     </script>
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="../static/js/jquery.ui.touch-punch.min.js"></script>
     <script src="../static/js/engine.js?q={{ randomID }}"></script>
+    <link rel="stylesheet" href="../static/css/cozmo_animation_list.css?q={{ randomID }}">
 </head>
 
 <body>
     <div id="header">
-        <img src="../static/img/cozmo-logo.svg" class="logo" height="30" width="147">
-        Animation Explorer
-        <div class="hermit">created by <a href="https://forums.anki.com/users/grinninghermit/summary">GrinningHermit</a></div>
+        <div class="contentarea">
+            <div class="v-align">
+                <img src="../static/img/cozmo-logo.svg" class="logo" height="30" width="147">
+            </div>
+            <span>Animation<br/>Explorer<i class="fa fa-search"></i></span>
+            <div id="cozmo-container">
+                <img src="../static/img/cozmo_blank.svg" id="c-blank" class="cozmo">
+                <img src="../static/img/cozmo_eyes.svg" id="c-eyes" class="cozmo">
+                <img src="../static/img/cozmo_playing.svg" id="c-play" class="cozmo">
+            </div>
+            <div class="hermit">created by <br/><a href="https://forums.anki.com/users/grinninghermit/summary">GrinningHermit</a></div>
+        </div>
     </div>
     <div id="content">
+        <div id="tabs">
+            <ul id="tabs-list">
+                <li><a href="#fragment-0"><span>Animations</span></a></li>
+                <li><a href="#fragment-1"><span>Triggers</span></a></li>
+                <li><a href="#fragment-2" ><span>Behaviors</span></a></li>
+                <div class="checkbox">
+                    <input type="checkbox" name="checkbox1" id="checkbox-1">
+                    <label for="checkbox-1">return to pose after animation</label>
+                </div>
+            </ul>
+            <div id="fragment-0" class="flex-cstm">
+                <div class="l-col">
+                    <div class="bg-grey">
+                        <input class="search" name="search" placeholder="Search" type="text" data-list=".list">
+                        <i class="filterclear fa fa-times-circle"></i>
+                        <i class="filtersubmit fa fa-search"></i>
+                    </div>
+                    <ul id="ul-animations" class="ul-list"></ul>
+                </div>
+                <div class="r-col">
+                    <div id="accordion">
+                        <h3> Info</h3>
+                        <div>
+                            <p></p>
+                        </div>
+                    </div>
+                    <div id="search-btns">
+                    </div>
+                </div>
+            </div>
+            <div id="fragment-1" class="flex-cstm">
+
+            </div>
+            <div id="fragment-2" class="flex-cstm">
+
+            </div>
+        </div>
+    {#
         <div id="l-col" class="flex-col">
             <div class="bg-grey">
                 <input id="search" name="search" placeholder="Search" type="text" data-list=".list">
@@ -35,7 +84,7 @@
             </div>
         </div>
         <div id="c-col" class="flex-col">
-            <ul class="list"></ul>
+            <ul id="ul-list" class="list"></ul>
         </div>
         <div id="r-col" class="flex-col">
             <div>
@@ -52,6 +101,7 @@
                 This is the complete list of animations directly pulled from Cozmo's memory. Click an animation to play it. You can copy an animation for your own use in your python script. <br><br>Check the project file 'play_animation.py' on how to play the animation in your own script.
             </div>
         </div>
+#}
     </div>
 </body>
 
