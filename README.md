@@ -11,7 +11,7 @@ Changes compared to v1.0
 -
 - Triggers can now be played. They are group names for a set of similar animations. When played, one of the animations from the set is picked randomly.
 - Behaviors can now be played. They are ongoing sets of instructions that can be interrupted. I.e.: Playing 'KnockOverCubes' will cause Cozmo to crash a stack of cubes he sees. If no stacked cubes are visible, he will do nothing.
-- An option 'return to pose' can be checked. Depending on the animation Cozmo executes, he can move around. Not every animation ends where he started. This checkbox makes sure he returns to his pose before the animation starts, both location and direction.
+- An option 'return to pose' can be checked. Depending on the animation Cozmo executes, he can move around. Not every animation ends where he started. This checkbox makes sure he returns to the pose he had before the animation starts.
 - Playing an animation is now achieved by clicking a button that appears on the line that has the mouse cursor hovering over it.
 - Copying the animation can now be done by clicking a button that appears on the line that has the mouse cursor hovering over it OR by selecting the text of the animation name and using the keyboard shortcut Ctrl-C (Windows/Linux) or Command-C (Mac).
 
