@@ -4,35 +4,43 @@
     List all Cozmo animations on a web page with buttons to try the animations.
     In order to run this script, you also need all the other files inside the project.
     If that is the case, running this script will load the interface.
+
+    Created by: GrinningHermit
 """
 
-from flask import Flask, render_template, request
-import flask_helpers
-import cozmo
 import json
+import queue
 import random
 import time
 import logging
+from flask import Flask, render_template, request
+import flask_socket_helpers
+import cozmo
+
+
 logging.basicConfig(format='%(asctime)s animation explorer %(levelname)s %(message)s', level=logging.INFO)
 
+thread = None
 robot = None
 cozmoEnabled = True
 return_to_pose = False
-flask_app = Flask(__name__)
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
 rndID = random.randrange(1000000000, 9999999999)
 animations = ''
 triggers = ''
 behaviors = ''
 action = []
 pose = None
+q = queue.Queue()
 
 
-@flask_app.route('/')
+@app.route('/')
 def index():
     return render_template('index.html', randomID=rndID, animations=animations, triggers=triggers, behaviors=behaviors)
 
 
-@flask_app.route('/toggle_pose', methods=['POST'])
+@app.route('/toggle_pose', methods=['POST'])
 def toggle_pose():
     global return_to_pose
     # Toggle for returning to pose after finishing animation
@@ -41,7 +49,7 @@ def toggle_pose():
     return str(return_to_pose)
 
 
-@flask_app.route('/play_animation', methods=['POST'])
+@app.route('/play_animation', methods=['POST'])
 def play_animation():
     # Handling of received animation
     global pose
@@ -57,7 +65,7 @@ def play_animation():
     return 'true'
 
 
-@flask_app.route('/play_trigger', methods=['POST'])
+@app.route('/play_trigger', methods=['POST'])
 def play_trigger():
     # Handling of received trigger
     global pose
@@ -73,7 +81,7 @@ def play_trigger():
     return 'true'
 
 
-@flask_app.route('/play_behavior', methods=['POST'])
+@app.route('/play_behavior', methods=['POST'])
 def play_behavior():
     # Handling of received behavior
     global pose
@@ -90,7 +98,7 @@ def play_behavior():
     return 'true'
 
 
-@flask_app.route('/stop', methods=['POST'])
+@app.route('/stop', methods=['POST'])
 def stop():
     global action
     if action is not []:
@@ -130,7 +138,7 @@ def cozmo_program(_robot: cozmo.robot.Robot):
                 behaviors += b + ','
         behaviors = behaviors[:-1]
         logging.info('Attempting to open browser window at 127.0.0.1:5000')
-        flask_helpers.run_flask(flask_app)
+        flask_socket_helpers.run_flask(app)
 
     except KeyboardInterrupt:
         print("\nExit requested by user")
@@ -140,9 +148,7 @@ try:
 except SystemExit as e:
     cozmoEnabled = False
     try:
-        flask_helpers.run_flask(flask_app)
+        flask_socket_helpers.run_flask(app)
     except KeyboardInterrupt:
         print("\nExit requested by user")
 
-    print('e = "%s"' % e)
-    print('\nNo Cozmo detected')

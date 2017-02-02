@@ -4,6 +4,7 @@ var tempListID = null;
 var isPlayingListID = null;
 var returnToPose = false;
 var stopTimeOut;
+var socket;
 
 var currentTab = 'animations';
 
@@ -79,7 +80,6 @@ getHttpRequest = function (url, dataSet) {
 
 // while running (or not) toggle elements
 checkRunning = function (bool) {
-    console.log('checkRunning: ' + bool);
     isRunning = bool;
 
     if (bool){
@@ -378,6 +378,8 @@ $( function () {
             createList(listArray[id]);
             if (currentTab == 'animations'){
                 createGroupButtons();
+            } else if (currentTab == 'behaviors'){
+                $('#search-btns').append('<div id="log"></div>')
             }
             initSearch();
             for (var j = 0; j < listArray.length; j++){
@@ -408,6 +410,8 @@ $( function () {
     $('#checkbox-1').bind('change', function(){
         getHttpRequest('toggle_pose', '');
     });
+
+    init_websocket();
 
     $(window).resize(function () {
         waitForFinalEvent(function(){
