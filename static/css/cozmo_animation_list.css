@@ -13,7 +13,6 @@ body {
 }
 
 #header {
-    flex: 0 1 auto;
     font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
     color: #ffffff;
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.05);
@@ -24,9 +23,8 @@ body {
 }
 
 #header .contentarea {
-    width: 800px;
     text-align: left;
-    margin: 0 auto 0 auto;
+    margin: 0 auto 0 2px;
 }
 
 #header span {
@@ -49,20 +47,20 @@ body {
 
 #content {
     display: flex;
-    flex-direction: column;
-    flex: 0 1 auto;
-    width: 800px;
-    margin: 0 auto 0 auto;
+    flex-direction: row;
+    flex: 2;
+    margin: 0 2px 0 2px;
     padding: 0;
 }
 
 .flex-cstm {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    flex: 0 1 auto;
     text-align: left;
     overflow: hidden !important;
     padding: 0 !important;
-    width: 800px;
+    width: 400px;
     margin: 2px 0 -2px 0;
 }
 
@@ -85,10 +83,12 @@ body {
 }
 
 #tabs {
-    width: 800px;
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
 }
 
-#tabs-list li:before, #tabs-list li:after {
+.tabs-list li:before, .tabs-list li:after {
     content: "";
     position: absolute;
     background-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 100%);
@@ -97,21 +97,24 @@ body {
     width: 1px;
 }
 
-#tabs-list li:before {
+.tabs-list li:before {
     left: -1px;
 }
 
-#tabs-list li:after {
+.tabs-list li:after {
     right: -1px;
 }
 
 .ul-list {
-    display: inline-block;
-    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    flex: 0 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     list-style: none;
     font-family: "Courier", "Lucida Console", monospace;
     font-size: .8em;
-    width: 500px;
+    width: 400px;
     margin: 0 0 2px 0;
     padding: 0;
 }
@@ -123,6 +126,7 @@ body {
     color: #444444;
     background-color: white;
     opacity: 1;
+    position: relative;
     transition: background 0.25s ease-out, opacity 0.4s ease-in-out;
 }
 
@@ -136,6 +140,9 @@ body {
 
 #list-buttons {
     float: right;
+    position: absolute;
+    right: 0;
+    top: 0;
     background-color: white;
     color: black;
     padding: 0;
@@ -170,9 +177,15 @@ body {
 
 }
 
-#search-btns {
-    display: block;
-    padding: 0 4px;
+#group-btns {
+    display: none;
+    flex: 0 1 auto;
+    padding: 0;
+    margin: 0 0 5px 0;
+}
+
+#group-content {
+    padding: 0 2px 0 2px;
 }
 
 .box:hover {
@@ -205,7 +218,7 @@ input {
     outline: none;
     margin: 0;
     padding: 0 0 0 5px;
-    width: 470px;
+    width: 370px;
     border: 1px solid #cccccc;
 }
 
@@ -246,17 +259,18 @@ button:focus {
 }
 
 .bg-grey {
+    flex: 0 1 auto;
     background-image: linear-gradient(to bottom, #cccccc, white);
     padding: 5px 0 5px 5px;
-    width: 495px;
+    width: 395px;
 }
 
 #cozmo-container {
-    float: right;
+    float: left;
     width: 60px;
     height: 60px;
     position: relative;
-    margin: 5px 0 0 10px;
+    margin: 5px 10px 0 10px;
 }
 
 .cozmo {
@@ -318,7 +332,7 @@ button:focus {
     background-image: linear-gradient(to right, #000000, #dddddd);
     position: absolute;
     left: 0;
-    width: 474px;
+    width: 374px;
     height: 24px;
     padding: 0 0 0 11px;
     margin: 0 0 0 2px;
@@ -329,7 +343,7 @@ button:focus {
     float: right;
     font-size: .6em;
     color: #999999;
-    margin: 25px 0 0 0;
+    margin: 25px 10px 0 0;
     text-align: right;
     line-height: 14px;
 }
@@ -365,4 +379,173 @@ button:focus {
     font-weight: normal;
     cursor: pointer;
     user-select: none;
+}
+
+#column-2 {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    margin: 0;
+    overflow: hidden;
+    padding: 2px 0 0 0;
+    text-align: left;
+    min-width: 220px;
+}
+
+.window-header {
+    background-color: rgba(0,0,0,0.1);
+    cursor: pointer;
+    user-select: none;
+}
+
+.window-header:hover {
+    background-color: rgba(0,0,0,0.5);
+}
+
+.window-header b {
+    line-height: 37px;
+    padding: 0 0 0 5px;
+}
+
+.accordeon-icon {
+    margin: 0 5px 0 0;
+}
+
+.window-header:hover i{
+    color: #ffffff;
+}
+
+.window-header b input {
+    position: relative;
+    top: 5px;
+    width: 30px;
+    height: 20px;
+    margin: 0 0 0 2px;
+}
+
+#event-monitor {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+}
+
+#event-content {
+    flex: 1 1 auto;
+    font-size: .8em;
+    list-style: none;
+    margin: 2px 0 0 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#event-content li {
+    margin: 0 0 1px 0;
+    background-color: #eeeeee;
+    animation-name: item-appear;
+    animation-duration: 1s;
+    transition: background 0.25s ease-out, opacity 0.4s ease-in-out;
+}
+
+#event-content li:hover {
+    transition: none;
+    background-color: #cccccc;
+}
+
+#event-content li span {
+    background-color: #777777;
+    color: #ffffff;
+    padding: 0 2px 0 2px;
+    margin: 0 5px 0 0;
+}
+
+@keyframes item-appear {
+    0%      {background-color: #777777;}
+    100%    {background-color: #eeeeee;}
+}
+
+.hidden {
+    display: none !important;
+}
+
+#viewer {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    min-height: 37px;
+    max-height: 397px;
+    margin: 2px 0 0 0;
+    /*transition: min-height 0.5s ease-out;*/
+}
+
+#viewer-header {
+    flex: 0 1 auto;
+}
+
+#viewer-content {
+    display: flex;
+    flex: 0 1 auto;
+    height: 360px;
+}
+
+.viewer-height{
+    min-height: 397px !important;
+}
+
+#controls {
+    min-height: 37px;
+    max-height: 339px;
+
+    flex: 0 1 292px;
+}
+
+#controls-content {
+    background-image: url("../img/controls_background.svg");
+    height: 302px;
+    position: relative;
+    user-select: none;
+    cursor:default;
+
+    /*display: none;*/
+}
+
+.control-button {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    background-color: #D8D8D8;
+    border-radius: 8px;
+    box-sizing: border-box;
+    border: 1px solid #979797;
+    text-align: center;
+    line-height: 44px;
+    font-size: 32px;
+    font-weight: bold;
+    color: #4A4A4A;
+}
+
+.control-button:hover {
+    background-color: #979797;
+    border: 1px solid #4A4A4A;
+}
+
+.control-button-active {
+    background-color: #979797;
+    border: 1px solid #4A4A4A;
+    color: #ffffff;
+}
+
+.control-state {
+    position: absolute;
+    width: 70px;
+    height: 27px;
+    background-color: #CCCCCC;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 27px;
+    font-size: 18px;
+    color: #ffffff;
+}
+.control-state-active {
+    background-color: #4A4A4A;
 }

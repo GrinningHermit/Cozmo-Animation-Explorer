@@ -16,14 +16,7 @@ import sys
 from threading import Thread
 import webbrowser
 from time import sleep
-from io import BytesIO
 import socket
-
-try:
-    from flask import make_response, send_file
-except ImportError:
-    sys.exit("Cannot import from flask: Do `pip3 install --user flask` to install")
-
 
 def _delayed_open_web_browser(url, delay, new=0, autoraise=True, specific_browser=None):
     """
@@ -73,26 +66,3 @@ def run_flask(socketio, app, host_ip='0.0.0.0', host_port=5000, enable_flask_log
     else:
         app.run(host=host_ip, port=host_port)
 
-
-def make_uncached_response(in_file):
-    response = make_response(in_file)
-    response.headers['Pragma-Directive'] = 'no-cache'
-    response.headers['Cache-Directive'] = 'no-cache'
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    return response
-
-
-def serve_pil_image(pil_img, serve_as_jpeg=False, jpeg_quality=70):
-    '''Convert PIL image to relevant image file and send it'''
-    img_io = BytesIO()
-
-    if serve_as_jpeg:
-        pil_img.save(img_io, 'JPEG', quality=jpeg_quality)
-        img_io.seek(0)
-        return make_uncached_response(send_file(img_io, mimetype='image/jpeg'))
-    else:
-        pil_img.save(img_io, 'PNG')
-        img_io.seek(0)
-        return make_uncached_response(send_file(img_io, mimetype='image/png'))

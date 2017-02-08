@@ -7,148 +7,120 @@
 
     Created by: GrinningHermit
 """
-
-import json
+import datetime
+import os
 import queue
 import random
-import time
 import logging
-from flask import Flask, render_template, request
+from flask import Flask, render_template
+
 import flask_socket_helpers
 import cozmo
+import event_monitor
+from viewer import viewer, activate_viewer_if_enabled
+from remote_control import remote_control, activate_controls
+from animate import animate, init_animate
 
+# logging.basicConfig(format='%(asctime)s animation explorer %(levelname)s %(message)s', level=print)
 
-logging.basicConfig(format='%(asctime)s animation explorer %(levelname)s %(message)s', level=logging.INFO)
+flask_socketio_installed = False
+try:
+    from flask_socketio import SocketIO, emit, disconnect
+    flask_socketio_installed = True
+except ImportError:
+    logging.warning('Cannot import from flask_socketio: Do `pip3 install --user flask-socketio` to install\nProgram runs without flask_socketio, but without event monitoring')
+
+eventlet_installed = False
+try:
+    import eventlet
+    eventlet_installed = True
+except ImportError:
+    logging.warning('Cannot import from eventlet: Do `pip3 install --user eventlet` to install\nEvent monitoring works, but performance is decreased')
+
 
 thread = None
 robot = None
 cozmoEnabled = True
-return_to_pose = False
+lists = []
+async_mode = 'threading'
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
+app.register_blueprint(viewer)
+app.register_blueprint(remote_control)
+app.register_blueprint(animate)
 rndID = random.randrange(1000000000, 9999999999)
-animations = ''
-triggers = ''
-behaviors = ''
-action = []
-pose = None
 q = queue.Queue()
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+if flask_socketio_installed:
+    socketio = SocketIO(app, async_mode=async_mode)
+
+    # Functions for event monitoring
+    def print_queue(qval):
+        while qval.qsize() > 0:
+            timestamp = '{:%H:%M:%S.%f}'.format(datetime.datetime.now())
+            message = qval.get()
+            print(timestamp + ' -> ' + message)
+            socketio.emit('my_response',
+                {'data': message, 'type': 'event', 'time': timestamp})
+
+
+    def background_thread(qval):
+        while True:
+            if not qval.empty():
+                print_queue(qval)
+            socketio.sleep(.1)
+
+
+    @socketio.on('connect')
+    def test_connect():
+        global thread
+        if thread is None:
+            thread = socketio.start_background_task(background_thread, q)
+        emit('my_response', {'data': 'SERVER: websocket connection established. Displaying events, like  Cozmo seeing a cube or tapping a cube.'})
 
 
 @app.route('/')
 def index():
-    return render_template('index.html', randomID=rndID, animations=animations, triggers=triggers, behaviors=behaviors)
+    return render_template('index.html', randomID=rndID, animations=lists[0], triggers=lists[1], behaviors=lists[2], hasSocketIO=flask_socketio_installed)
 
 
-@app.route('/toggle_pose', methods=['POST'])
-def toggle_pose():
-    global return_to_pose
-    # Toggle for returning to pose after finishing animation
-    return_to_pose = not return_to_pose
-    logging.info('return_to_pose is set to: ' + str(return_to_pose))
-    return str(return_to_pose)
-
-
-@app.route('/play_animation', methods=['POST'])
-def play_animation():
-    # Handling of received animation
-    global pose
-    animation = json.loads(request.data.decode('utf-8'))
-    if cozmoEnabled:
-        pose = robot.pose
-        robot.play_anim(animation).wait_for_completed()
-        logging.info('Animation \'' + animation + '\' started')
-        check_pose_return()
+def start_server():
+    if flask_socketio_installed:
+        flask_socket_helpers.run_flask(socketio, app)
     else:
-        time.sleep(2)
-
-    return 'true'
-
-
-@app.route('/play_trigger', methods=['POST'])
-def play_trigger():
-    # Handling of received trigger
-    global pose
-    trigger = json.loads(request.data.decode('utf-8'))
-    if cozmoEnabled:
-        pose = robot.pose
-        robot.play_anim_trigger(getattr(cozmo.anim.Triggers, trigger)).wait_for_completed()
-        logging.info('Trigger \'' + trigger + '\' started')
-        check_pose_return()
-    else:
-        time.sleep(2)
-
-    return 'true'
-
-
-@app.route('/play_behavior', methods=['POST'])
-def play_behavior():
-    # Handling of received behavior
-    global pose
-    global action
-    behavior = json.loads(request.data.decode('utf-8'))
-    if cozmoEnabled:
-        pose = robot.pose
-        action = [robot.start_behavior(getattr(cozmo.behavior.BehaviorTypes, behavior)), behavior]
-        logging.info('Behavior \'' + behavior + '\' started')
-
-    else:
-        time.sleep(2)
-
-    return 'true'
-
-
-@app.route('/stop', methods=['POST'])
-def stop():
-    global action
-    if action is not []:
-        robot.stop_freeplay_behaviors()
-        logging.info('behavior \'' + action[1] + '\' stopped')
-        action = []
-        check_pose_return()
-    else:
-        robot.abort_all_actions()
-
-    return 'false'
-
-
-def check_pose_return():
-    if return_to_pose:
-        robot.go_to_pose(pose)
-        logging.info('Cozmo returning to pose he had before animation started')
+        flask_socket_helpers.run_flask(None, app)
 
 
 def cozmo_program(_robot: cozmo.robot.Robot):
     global robot
+    global lists
     robot = _robot
 
     try:
-        global animations
-        global triggers
-        global behaviors
-        for a in robot.conn.anim_names:
-            animations += a + ','
-        animations = animations[:-1]
-        for t in dir(cozmo.anim.Triggers):
-            if '__' not in t:
-                triggers += t + ','
-        triggers = triggers[:-1]
-        for b in dir(cozmo.behavior.BehaviorTypes):
-            if '__' not in b:
-                behaviors += b + ','
-        behaviors = behaviors[:-1]
-        logging.info('Attempting to open browser window at 127.0.0.1:5000')
-        flask_socket_helpers.run_flask(app)
+        lists = init_animate(robot)
+        event_monitor.monitor(robot, q)
+        active_viewer = activate_viewer_if_enabled(robot)
+        if not active_viewer:
+            logging.warning('Cannot use camera view from Cozmo')
+        activate_controls(robot)
+        start_server()
 
     except KeyboardInterrupt:
         print("\nExit requested by user")
 
+
 try:
+    cozmo.robot.Robot.drive_off_charger_on_connect = False
     cozmo.run_program(cozmo_program)
+
 except SystemExit as e:
     cozmoEnabled = False
     try:
-        flask_socket_helpers.run_flask(app)
+        start_server()
     except KeyboardInterrupt:
         print("\nExit requested by user")
 

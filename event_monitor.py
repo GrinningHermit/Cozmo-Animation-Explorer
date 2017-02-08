@@ -19,7 +19,7 @@ import time
 import cozmo
 
 robot = None
-q = None # dependency on queue variable for messaging instead of printing to log directly
+q = None # dependency on queue variable for messaging instead of printing to event-content directly
 thread_running = False # starting thread for custom events
 
 # custom eventlistener for picked-up and falling state, more states could be added
@@ -34,16 +34,17 @@ class CheckState (threading.Thread):
         delay = 10
         is_picked_up = False
         is_falling = False
+        is_on_charger = False
         while thread_running:
             if robot.is_picked_up:
                 delay = 0
                 if not is_picked_up:
                     is_picked_up = True
-                    msg = '-> cozmo.robot.Robot.is_pickup_up: True'
+                    msg = 'cozmo.robot.Robot.is_pickup_up: True'
                     self.q.put(msg)
             elif is_picked_up and delay > 9:
                 is_picked_up = False
-                msg = '-> cozmo.robot.Robot.is_pickup_up: False'
+                msg = 'cozmo.robot.Robot.is_pickup_up: False'
                 self.q.put(msg)
             elif delay <= 9:
                 delay += 1
@@ -51,19 +52,30 @@ class CheckState (threading.Thread):
             if robot.is_falling:
                 if not is_falling:
                     is_falling = True
-                    msg = '-> cozmo.robot.Robot.is_falling: True'
+                    msg = 'cozmo.robot.Robot.is_falling: True'
                     self.q.put(msg)
             elif not robot.is_falling:
                 if is_falling:
                     is_falling = False
-                    msg = '-> cozmo.robot.Robot.is_falling: False'
+                    msg = 'cozmo.robot.Robot.is_falling: False'
+                    self.q.put(msg)
+
+            if robot.is_on_charger:
+                if not is_on_charger:
+                    is_on_charger = True
+                    msg = 'cozmo.robot.Robot.is_on_charger: True'
+                    self.q.put(msg)
+            elif not robot.is_on_charger:
+                if is_on_charger:
+                    is_on_charger = False
+                    msg = 'cozmo.robot.Robot.is_on_charger: False'
                     self.q.put(msg)
 
             time.sleep(0.1)
 
 
 def print_prefix(evt):
-    msg = '-> ' + evt.event_name + ' '
+    msg = evt.event_name + ' '
     return msg
 
 def print_object(obj):
@@ -84,9 +96,9 @@ def monitor_generic(evt, **kwargs):
     if 'action' in kwargs:
         action = kwargs['action']
         if isinstance(action, cozmo.anim.Animation):
-            msg += action.anim_name
+            msg += action.anim_name + ' '
         elif isinstance(action, cozmo.anim.AnimationTrigger):
-            msg += action.trigger.name
+            msg += action.trigger.name + ' '
     msg += str(set(kwargs.keys()))
     q.put(msg)
 
@@ -155,8 +167,8 @@ def monitor(_robot, _q, evt_class=None):
         for k,v in dispatch_table.items():
             if k not in excluded_events:
                 robot.world.add_event_handler(k,v)
-    thread_is_picked_up = CheckState(1, 'ThreadCheckState', q)
-    thread_is_picked_up.start()
+    thread_is_state_changed = CheckState(1, 'ThreadCheckState', q)
+    thread_is_state_changed.start()
 
 
 def unmonitor(_robot, evt_class=None):

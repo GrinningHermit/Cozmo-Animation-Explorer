@@ -1,12 +1,12 @@
-var isRunning = false;
-var isMouseDown = false;
-var tempListID = null;
-var isPlayingListID = null;
-var returnToPose = false;
-var stopTimeOut;
-var socket;
+let isRunning = false;
+let isMouseDown = false;
+let tempListID = null;
+let isPlayingListID = null;
+let stopTimeOut;
+let socket;
+let imageInterval, mousedownInterval, mouseKeyCode, animateHTML;
 
-var currentTab = 'animations';
+let currentTab = 'animations';
 
 if(anims_raw == ''){
     // test data for running without Cozmo connected
@@ -16,33 +16,33 @@ if(anims_raw == ''){
 }
 
 stringSorting = function (str) {
-    var array = str.split(',');
+    let array = str.split(',');
     array.sort();
     return array
 };
 
-var animations = {
+let animations = {
     name: 'animations',
     list: stringSorting(anims_raw),
     str: '',
     active: 0,
     info: 'A list of animations. Pick an animation from the list and click the play button to animate Cozmo.<br/><br/>For copying to clipboard:<br/>A.) use the copy button, OR<br/>B.) select a line of text and press Ctrl-C'};
-var triggers = {
+let triggers = {
     name: 'triggers',
     list: stringSorting(triggers_raw),
     str: '',
     active: 0,
-    info: 'A list of animation sets. This differs from the Animation list in that each time you press the same animation from the list, it may play out slightly different. This offers variety: it makes Cozmo seem more alive if you use triggers in your own code.<br/><br/>For copying to clipboard:<br/>A.) use the copy button, OR<br/>B.) select a line of text and press Ctrl-C'};
-var behaviors = {
+    info: 'A list of animation sets. This differs from the Animation list in that each time you press the same animation from the list, it may play out slightly different. This offers letiety: it makes Cozmo seem more alive if you use triggers in your own code.<br/><br/>For copying to clipboard:<br/>A.) use the copy button, OR<br/>B.) select a line of text and press Ctrl-C'};
+let behaviors = {
     name: 'behaviors',
     list: stringSorting(behaviors_raw),
     str: '',
     active: 0,
     info: 'A list of behaviors. Behaviors represent a task that Cozmo may perform for an indefinite amount of time. Animation Explorer limits active time to 30 seconds. You can abort by pressing the \'stop\' button.<br/><br/>For copying to clipboard:<br/>A.) use the copy button, OR<br/>B.) select a line of text and press Ctrl-C'};
 
-var listArray = [animations, triggers, behaviors];
+let listArray = [animations, triggers, behaviors];
 
-var listButtons = '' +
+let listButtons = '' +
     '<div id="list-buttons">' +
         // '<i id="btn-explanation" class="fa fa-question box"></i>' +
         '<i id="btn-copy-clipboard" class="fa fa-copy box"></i>' +
@@ -50,11 +50,12 @@ var listButtons = '' +
     '</div>';
 
 // sending and receiving json from server
-getHttpRequest = function (url, dataSet) {
+getHttpRequest = function (url, dataSet)
+{
     if(url != 'toggle_pose' && !isRunning) {
         checkRunning(true);
     }
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {
             if(isRunning) {
@@ -77,6 +78,13 @@ getHttpRequest = function (url, dataSet) {
     xhr.open('POST', url, true);
     xhr.send(JSON.stringify(dataSet));
 };
+
+function postHttpRequest(url, dataSet)
+{
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
+    xhr.send( JSON.stringify( dataSet ) );
+}
 
 // while running (or not) toggle elements
 checkRunning = function (bool) {
@@ -121,7 +129,7 @@ checkRunning = function (bool) {
 
 // store text value in OS clipboard
 function copyTextToClipboard(text) {
-    var textArea = document.createElement('textarea');
+    let textArea = document.createElement('textarea');
     textArea.value = text;
     document.body.appendChild(textArea);
     textArea.select();
@@ -136,7 +144,7 @@ function copyTextToClipboard(text) {
 }
 
 function loadArray(){
-    var array = [];
+    let array = [];
     if (currentTab == 'animations'){
         array = animations;
     } else if (currentTab == 'triggers'){
@@ -149,10 +157,10 @@ function loadArray(){
 
 // hide list item if string from search box does not match list item text
 function matchCharacters(str){
-    var array = loadArray();
+    let array = loadArray();
 
-    for(var i = 0; i < array.list.length; i++){
-        var elem = $('#li_' + i);
+    for(let i = 0; i < array.list.length; i++){
+        let elem = $('#li_' + i);
         if (array.list[i].toLowerCase().indexOf(str.toLowerCase()) != -1){
             elem.show();
         } else {
@@ -176,9 +184,9 @@ function showClear(str){
 
 // create list
 function createList(array){
-    for (var i =0; i < array.list.length; i++) {
-        $('#ul-' + array.name).append('<li id="li_' + i + '" class="item-list"><span>' + array.list[i] + '</span></li>');
-        var li = $('#li_' + i);
+    for (let i =0; i < array.list.length; i++) {
+        $('#ul-animations').append('<li id="li_' + i + '" class="item-list"><span>' + array.list[i] + '</span></li>');
+        let li = $('#li_' + i);
         li.mouseenter(function () {
             if(!isRunning) {
                 if ($('#list-buttons').length) {
@@ -202,7 +210,7 @@ function createListButtons(item){
     if(!isRunning && !isMouseDown) {
         item.append(listButtons);
         $('#btn-play-stop').click(function () {
-            var array = loadArray();
+            let array = loadArray();
             if(!isRunning) {
                 getHttpRequest('play_' + array.name.substr(0, array.name.length - 1), $('#list-buttons').parent().text()); // start specific animation
             }else {
@@ -211,8 +219,8 @@ function createListButtons(item){
             }
         });
         $('#btn-copy-clipboard').click(function () {
-            var textObj = $('#list-buttons').parent().children(":first");
-            var str = textObj.text();
+            let textObj = $('#list-buttons').parent().children(":first");
+            let str = textObj.text();
             textObj.text('copied to clipboard');
             //parent.mouseenter(); // this behaves quirky
             copyTextToClipboard(str);
@@ -225,10 +233,10 @@ function createListButtons(item){
         $('#btn-explanation').click(function () {
 /*
             if (!$('#copied').length) {
-                var str = $('#list-buttons').parent().text();
+                let str = $('#list-buttons').parent().text();
                 copyTextToClipboard(str);
                 $('#list-buttons').parent().append('<div id="copied">copied to clipboard</div>');
-                console.log(str);
+                console.event-content(str);
                 setTimeout(function () {
                     $('#copied').remove();
                 }, 600);
@@ -241,7 +249,7 @@ function createListButtons(item){
 function initSearch() {
     // evaluate search input value after every entered key
     $('.search').bind('input', function (){
-        var str = $('.search').val();
+        let str = $('.search').val();
         matchCharacters(str);
     });
 
@@ -254,17 +262,17 @@ function initSearch() {
 
 function createGroupButtons() {
     // create group buttons
-    var groupButtons = [];
+    let groupButtons = [];
 
-    for (var j=0; j < animations.list.length; j++){
-        var str = animations.list[j];
-        var n = str.indexOf("_");
+    for (let j=0; j < animations.list.length; j++){
+        let str = animations.list[j];
+        let n = str.indexOf("_");
         str = str.substr(n+1);
         n = str.indexOf("_");
         str = str.substr(0, n);
 
-        var match = false;
-        for(var k = 0; k < groupButtons.length;k++){
+        let match = false;
+        for(let k = 0; k < groupButtons.length;k++){
             if(groupButtons[k] == str){
                 match = true;
                 break
@@ -272,10 +280,10 @@ function createGroupButtons() {
         }
         if(!match && animations.list[j].indexOf('anim_') > -1){
             groupButtons[groupButtons.length] = str;
-            $('#search-btns').append('<button id="btn-' + str + '" class="flex-item ui-button ui-widget ui-corner-all">' + str + '</button>');
+            $('#group-content').append('<button id="btn-' + str + '" class="flex-item ui-button ui-widget ui-corner-all">' + str + '</button>');
             $('#btn-' + str).click(function(){
                 if (!isRunning) {
-                    var str = $(this).text();
+                    let str = $(this).text();
                     if ($('.search').val() == str) {
                         str = '';
                     }
@@ -287,26 +295,8 @@ function createGroupButtons() {
     }
 }
 
-function createAccordeon() {
-    var list = {};
-    for (var i = 0; i < listArray.length; i++){
-        if (listArray[i].name == currentTab){
-            list = listArray[i];
-            $('#accordion p').append(list.info);
-        }
-    }
-    $('#accordion').accordion({
-        collapsible: true,
-        activate: function(event, ui){
-            ui.oldHeader.removeClass('box-shadow');
-            list.active = $(this).accordion( "option", "active" );
-        },
-        active: list.active
-    });
-}
-
-var waitForFinalEvent = (function () {
-  var timers = {};
+let waitForFinalEvent = (function () {
+  let timers = {};
   return function (callback, ms, uniqueId) {
     if (!uniqueId) {
       uniqueId = 'Do not call this twice without a uniqueId';
@@ -318,14 +308,140 @@ var waitForFinalEvent = (function () {
   };
 })();
 
+function updateImage() {
+    // Note: Firefox ignores the no_store and still caches, needs the "?UID" suffix to fool it
+    document.getElementById("cozmoImageId").src="cozmoImage?" + (new Date()).getTime();
+}
+
+function handleKeyActivity (e, actionType)
+{
+    let keyCode  = (e.keyCode ? e.keyCode : e.which);
+    let hasShift = (e.shiftKey ? 1 : 0);
+    let hasCtrl  = (e.ctrlKey  ? 1 : 0);
+    let hasAlt   = (e.altKey   ? 1 : 0);
+
+    let bID = [0, ''];
+    if (keyCode == 87) { bID = [0, '#ctrl_btn_W']} // W
+    if (keyCode == 83) { bID = [0, '#ctrl_btn_S']} // S
+    if (keyCode == 65) { bID = [0, '#ctrl_btn_A']} // A
+    if (keyCode == 68) { bID = [0, '#ctrl_btn_D']} // D
+    if (keyCode == 81) { bID = [0, '#ctrl_btn_Q']} // Q
+    if (keyCode == 69) { bID = [0, '#ctrl_btn_E']} // E
+    if (keyCode == 82) { bID = [0, '#ctrl_btn_R']} // R
+    if (keyCode == 70) { bID = [0, '#ctrl_btn_F']} // F
+    if (keyCode == 16) { bID = [1, '#ctrl_state_SHIFT']} // SHIFT
+    if (keyCode == 18) { bID = [1, '#ctrl_state_ALT']}   // ALT
+
+    if (actionType=="keyup")
+    {
+        if(bID[0] == 0) {
+            $(bID[1]).removeClass('control-button-active');
+        } else {
+            $(bID[1]).removeClass('control-state-active');
+        }
+
+    } else {
+        if(bID[0] == 0) {
+            $(bID[1]).addClass('control-button-active');
+        } else {
+            $(bID[1]).addClass('control-state-active');
+        }
+    }
+    postHttpRequest(actionType, {keyCode, hasShift, hasCtrl, hasAlt})
+}
+
+let initControlButtons = function(){
+    let controlButtons = [
+        ['W', 124, 159], // forward
+        ['S', 124, 227], // back
+        ['A', 70, 193],  // left
+        ['D', 178, 193], // right
+        ['Q', 17, 31],   // head up
+        ['E', 71, 31],   // head down
+        ['R', 177, 31],  // arm up
+        ['F', 231, 31]   // arm down
+    ];
+
+    let controlStates = [
+        ['SHIFT', 8, 267],
+        ['ALT', 214, 267]
+    ];
+
+    for (let i = 0; i < controlButtons.length; i++){
+        let bID = 'ctrl_btn_' + controlButtons[i][0];
+        $('#controls-content').append('<div id="'+ bID + '" class="control-button">' + controlButtons[i][0] + '</div>');
+        let btn = $('#' + bID);
+        btn.css({
+            left: controlButtons[i][1],
+            top: controlButtons[i][2]
+        });
+        btn.mousedown(function(){
+            mouseKeyCode = $(this).attr('id').charCodeAt(9);
+            $(this).addClass('control-button-active');
+/*
+            mousedownInterval = setInterval(function(){
+                console.event-content(mouseKeyCode);
+                postHttpRequest('keydown', {keyCode: mouseKeyCode, hasShift:0, hasCtrl:0, hasAlt:0})
+            }, 100);
+*/
+        });
+        btn.mouseup(function(){
+            clearInterval(mousedownInterval);
+            $(this).removeClass('control-button-active');
+        });
+        btn.mouseleave(function () {
+            clearInterval(mousedownInterval);
+            $(this).removeClass('control-button-active');
+        });
+    }
+    for (let j=0; j < controlStates.length; j++){
+        let bID = 'ctrl_state_' + controlStates[j][0];
+        $('#controls-content').append('<div id="'+ bID + '" class="control-state">' + controlStates[j][0] + '</div>');
+        let state = $('#' + bID);
+        state.css({
+            left: controlStates[j][1],
+            top: controlStates[j][2]
+        });
+    }
+};
+
 
 /*** INITIALIZATION ***/
 $( function () {
+
+    let initAnimationList = function(fragment, listType){
+        fragment.load('../static/includes/animate.html', function(){
+
+            for(let i = 0; i < listArray.length; i++){
+                if(listArray[i].name == listType){
+                    createList(listArray[i]);
+                    if(listType == 'animations'){
+                        createGroupButtons();
+                        $('#group-btns').show();
+                    } else $('#group-btns').hide();
+                    initSearch();
+                    let str = listArray[i].str;
+                    $('.search').val(str);
+                    matchCharacters(str);
+                }
+            }
+
+            $('#group-header').click(function () {
+                if ($('#group-content').hasClass('hidden')) {
+                    $('#group-content').removeClass('hidden');
+                    $('#group-header i').switchClass('fa-plus-square-o', 'fa-minus-square-o');
+                } else {
+                    $('#group-content').addClass('hidden');
+                    $('#group-header i').switchClass('fa-minus-square-o', 'fa-plus-square-o');
+                }
+            });
+
+        });
+    };
+
     // creating list of cozmo animations (active tab)
-    createList(animations);
-    createAccordeon();
-    createGroupButtons();
-    initSearch();
+    animateHTML = document.querySelector('link[rel="import"]');
+    initAnimationList($('#fragment-0'), 'animations');
 
     // enable clipboard copy button
     $('#btn-copy').click(function(){
@@ -336,59 +452,24 @@ $( function () {
     });
 
     $( "#tabs" ).tabs({
-        heightStyle: 'fill',
+        heightStyle: 'content',
         beforeActivate: function(event, ui){
             if(isRunning){
                 getHttpRequest('stop', ''); // abort action
                 checkRunning(false);
             }
-            for (var i = 0; i < listArray.length; i++){
+            for (let i = 0; i < listArray.length; i++){
                 if (listArray[i].name == currentTab){
                     listArray[i].str = $('.search').val();
                 }
             }
-            var idStr = ui.newTab.attr('aria-controls');
-            var oldStr = ui.oldTab.attr('aria-controls')
-            var id = Number(idStr.substr(9));
-            var name = listArray[id].name;
+            let idStr = ui.newTab.attr('aria-controls');
+            let oldStr = ui.oldTab.attr('aria-controls');
+            let id = Number(idStr.substr(9));
+            let name = listArray[id].name;
             currentTab = name;
             $('#' + oldStr).html('');
-            $('#' + idStr).html('' +
-                '<div class="l-col">' +
-                    '<div class="bg-grey">' +
-                        '<input class="search" name="search" placeholder="Search" type="text" data-list=".list">' +
-                        '<i class="filterclear fa fa-times-circle"></i><i class="filtersubmit fa fa-search"></i>' +
-                    '</div>' +
-                    '<ul id="ul-' + name + '" class="ul-list"></ul>' +
-                '</div>' +
-                '<div class="r-col">' +
-                    '<div id="accordion">' +
-                        '<h3> Info</h3>' +
-                        '<div>' +
-                            '<p></p>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div id="search-btns">' +
-                    '</div>' +
-                '</div>'
-            );
-            setTimeout(function () {
-                createAccordeon();
-            }, 50);
-            createList(listArray[id]);
-            if (currentTab == 'animations'){
-                createGroupButtons();
-            } else if (currentTab == 'behaviors'){
-                $('#search-btns').append('<div id="log"></div>')
-            }
-            initSearch();
-            for (var j = 0; j < listArray.length; j++){
-                if (listArray[j].name == currentTab){
-                    var str = listArray[j].str;
-                    $('.search').val(str);
-                    matchCharacters(str);
-                }
-            }
+            initAnimationList($('#' + idStr), currentTab);
         },
         classes: {
             'ui-tabs-nav': 'tabs-nav',
@@ -411,15 +492,74 @@ $( function () {
         getHttpRequest('toggle_pose', '');
     });
 
-    init_websocket();
-
-    $(window).resize(function () {
-        waitForFinalEvent(function(){
-            $('.flex-cstm').outerHeight($(window).height() - $('.flex-cstm').offset().top);
-            $('.ul-list').outerHeight($(window).height() - $('.ul-list').offset().top);
-        }, 500, 'uniqueID');
+    // event monitor timestamp toggle
+    $('#checkbox-2').prop( "checked", true );
+    $('#checkbox-2').bind('change', function(){
+        if($(this).is(':checked')) {
+            $('#event-content li span').removeClass('hidden');
+        } else {
+            $('#event-content li span').addClass('hidden');
+        }
     });
 
-    $(window).resize();
+    $('#event-header').click(function () {
+        if ($('#event-content').hasClass('hidden')) {
+            $('#event-content').removeClass('hidden');
+            $('#event-header i').switchClass('fa-plus-square-o', 'fa-minus-square-o');
+        } else {
+            $('#event-content').addClass('hidden');
+            $('#event-header i').switchClass('fa-minus-square-o', 'fa-plus-square-o');
+        }
+    });
 
+    initControlButtons();
+    $('#controls-header').click(function () {
+        if ($('#controls-content').hasClass('hidden')) {
+            $('#controls-content').removeClass('hidden');
+            $('#controls-header i').switchClass('fa-plus-square-o', 'fa-minus-square-o');
+        } else {
+            $('#controls-content').addClass('hidden');
+            $('#controls-header i').switchClass('fa-minus-square-o', 'fa-plus-square-o');
+        }
+    });
+
+    $('#viewer-header').click(function () {
+        let name = $(this).attr('id');
+        let len = name.length;
+        let id = name.substring(len - 7, len);
+        console.log(id);
+        if ($('#viewer-content').hasClass('hidden')) {
+            $('#viewer-content').removeClass('hidden');
+            $('#viewer-header i').switchClass('fa-plus-square-o', 'fa-minus-square-o');
+            $('#viewer').addClass('viewer-height');
+            imageInterval = setInterval(updateImage, 90);
+        } else {
+            $('#viewer-content').addClass('hidden');
+            $('#viewer-header i').switchClass('fa-minus-square-o', 'fa-plus-square-o');
+            $('#viewer').removeClass('viewer-height');
+            clearInterval(imageInterval);
+        }
+    });
+    imageInterval = setInterval(updateImage, 90);
+
+    // viewer debug toggle
+    $('#checkbox-5').prop( "checked", true );
+    $('#checkbox-5').bind('change', function(){
+        let debug_annotation_state;
+        if($(this).is(':checked')) {
+            debug_annotation_state = 2;
+        } else {
+            debug_annotation_state = 1;
+        }
+        postHttpRequest("setAreDebugAnnotationsEnabled", {areDebugAnnotationsEnabled: debug_annotation_state})
+    });
+
+    if(hasSocketIO == 'True') {
+        init_websocket();
+    } else {
+        $('#event-content').append('flask-socketio not installed, event monitoring only visible on python console or terminal');
+    }
+
+    document.addEventListener("keydown", function(e) { handleKeyActivity(e, "keydown") } );
+    document.addEventListener("keyup",   function(e) { handleKeyActivity(e, "keyup") } );
 });
